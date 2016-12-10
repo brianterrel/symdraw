@@ -9,20 +9,22 @@
 ;; define your app data so that it doesn't get over-written on reload
 
 (defonce app-state (reagent/atom {:title "Symdraw"
-                                  :circles []}))
-(defn click-handler []
-  (swap! app-state update-in [:circles] conj [:circle {:r (rand-int 10)
-                                                       :cx (rand-int 100)
-                                                       :cy (rand-int 100)}]))
-
+                                  :circles []
+                                  :text "Narnia"}))
+(defn click-handler [event]
+  (do
+    (swap! app-state update-in [:circles] conj [:circle {:r 20
+                                                         :cx (rand-int 500)
+                                                         :cy (rand-int 500)}])
+    (swap! app-state assoc-in [:text] (str "X: " (aget event "screenX")))))
 
 (defn symdraw []
   [:center
     [:div
       [:h1 (:title @app-state)]
+      [:h2 (:text @app-state)]
       (into
-        [:svg {:view-box "0 0 100 100"
-               :width 500
+        [:svg {:width 500
                :height 500
                :on-click click-handler}]
         (for [j (:circles @app-state)] j))
