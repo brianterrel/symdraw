@@ -3,20 +3,23 @@
 
 (enable-console-print!)
 
-(println "This text is printed from src/symdraw/core.cljs.
-         Go ahead and edit it and see reloading in action.")
+(println "Sandwiches, also the game.")
 
 ;; define your app data so that it doesn't get over-written on reload
 
 (defonce app-state (reagent/atom {:title "Symdraw"
-                                  :circles []
-                                  :text "Narnia"}))
+                                  :circles []}))
+
 (defn click-handler [event]
-  (do
-    (swap! app-state update-in [:circles] conj [:circle {:r 20
-                                                         :cx (rand-int 500)
-                                                         :cy (rand-int 500)}])
-    (swap! app-state assoc-in [:text] (str "X: " (aget event "screenX")))))
+  (let [x-offset (.-left (.getBoundingClientRect (. js/document (getElementById "main-svg"))))
+        x-position (.-clientX event)
+        x-svg (- x-position x-offset)
+        y-offset (.-top (.getBoundingClientRect (. js/document (getElementById "main-svg"))))
+        y-position (.-clientY event)
+        y-svg (- y-position y-offset)]
+    (swap! app-state update-in [:circles] conj [:circle {:r 10
+                                                         :cx x-svg
+                                                         :cy y-svg}])))
 
 (defn symdraw []
   [:center
@@ -24,7 +27,8 @@
       [:h1 (:title @app-state)]
       [:h2 (:text @app-state)]
       (into
-        [:svg {:width 500
+        [:svg {:id "main-svg"
+               :width 500
                :height 500
                :on-click click-handler}]
         (for [j (:circles @app-state)] j))
@@ -32,6 +36,7 @@
         [:button
           {:on-click (fn [] (swap! app-state assoc-in [:circles] []))}
           "Reset"]]]])
+
 
 (reagent/render-component [symdraw]
                           (. js/document (getElementById "app")))
