@@ -10,7 +10,7 @@
 (defonce app-state (reagent/atom {:title "Symdraw"
                                   :circles []}))
 
-(defn click-handler [event]
+(defn draw-at-cursor [event]
   (let [x-offset (.-left (.getBoundingClientRect (. js/document (getElementById "main-svg"))))
         x-position (.-clientX event)
         x-svg (- x-position x-offset)
@@ -21,6 +21,10 @@
                                                          :cx x-svg
                                                          :cy y-svg}])))
 
+(defn mouse-move-handler [event]
+  (if (= 1 (.-buttons event)) (draw-at-cursor event)))
+
+
 (defn symdraw []
   [:center
     [:div
@@ -30,7 +34,8 @@
         [:svg {:id "main-svg"
                :width 500
                :height 500
-               :on-click click-handler}]
+
+               :on-mouse-move mouse-move-handler}]
         (for [j (:circles @app-state)] j))
       [:p
         [:button
