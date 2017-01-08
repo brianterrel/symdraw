@@ -5,10 +5,11 @@
 
 (println "Sandwiches, also the game.")
 
-;; define your app data so that it doesn't get over-written on reload
+;; define your app data so that it doesn't get ovr-written on reload
 
 (defonce app-state (reagent/atom {:title "Symdraw"
-                                  :circles []}))
+                                  :circles []
+                                  :sym 5}))
 
 (defn coords-from-event [event]
   (let [x-offset (.-left (.getBoundingClientRect (. js/document (getElementById "main-svg"))))
@@ -25,12 +26,13 @@
                                                        :cy (rest center)}]))
 (defn square [x] (* x x))
 
-(defn magnitude [point-1 point-2]
+(defn magnitude
+  "Returns the Euclidean distance between two points"
+  [point-1 point-2]
   (let [[x1 y1] point-1
         [x2 y2] point-2]
     (Math/sqrt (+ (square (- x1 x2))
                   (square (- y1 y2))))))
-
 
 
 (defn sym-points
@@ -45,35 +47,56 @@
            loop-x x
            loop-y y
            theta (Math/asin (/ (- y cy) radius))]
+
       (if (= remaining 0) point-vec
           (recur (dec remaining)
                  (conj point-vec [loop-x loop-y])
-                 (+ cx (* radius (Math/cos (- Math/PI (+ theta sym-angle)))))
+                 ;I don't know *exactly* why this fixes the bug, but its almost 4am!
+                 (if (> x cx)
+                   (- cx (* radius (Math/cos (- Math/PI (+ theta sym-angle)))))
+                   (+ cx (* radius (Math/cos (- Math/PI (+ theta sym-angle))))))
                  (+ cy (* radius (Math/sin (- Math/PI (+ theta sym-angle)))))
                  (+ theta sym-angle))))))
 
-(magnitude [2 4] [3 3])
+(defn circles-from-list
+  "Make circles from a list of points"
+  [radius points]
+  (loop [loop-point (first points)
+         further-points (rest points)]
+    (if (nil? loop-point) nil
+      (do
+        (create-circle radius loop-point)
+        (recur
+          (first further-points)
+          (rest further-points))))))
 
-(sym-points [2 4] [3 3] 4)
-
-
+(defn svg-click-handler [event]
+  (circles-from-list 10 (sym-points (coords-from-event event) [250 250] (:sym @app-state))))
 
 (defn svg-mouse-move-handler [event]
-  (if (= 1 (.-buttons event)) (create-circle 10 (coords-from-event event))))
+  (if (= 1 (.-buttons event))(circles-from-list 10 (sym-points (coords-from-event event) [250 250] (:sym @app-state)))))
 
-
+(defn slider-handler []
+  (swap! app-state assoc-in [:sym] (.-value (. js/document (getElementById "sym-slider")))))
 
 
 (defn symdraw []
   [:center
     [:div
       [:h1 (:title @app-state)]
-      [:h2 (:text @app-state)]
+      [:p (str "Symmetry: " (:sym @app-state))
+        [:br]
+        [:input {:id "sym-slider"
+                 :type "range"
+                 :min 3
+                 :max 9
+                 :on-change slider-handler}]]
       (into
         [:svg {:id "main-svg"
                :width 500
                :height 500
-               :on-mouse-move svg-mouse-move-handler}]
+               :on-mouse-move svg-mouse-move-handler
+               :on-click svg-click-handler}]
         (for [j (:circles @app-state)] j))
       [:p
         [:button
