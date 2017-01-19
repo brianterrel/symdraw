@@ -7,9 +7,10 @@
 
 ;; define your app data so that it doesn't get ovr-written on reload
 
-(defonce app-state (reagent/atom {:title "Symdraw"
+(defonce app-state (reagent/atom {:title "Testing"
                                   :circles []
-                                  :sym 5}))
+                                  :sym 5
+                                  :color "red"}))
 
 (defn coords-from-event [event]
   (let [x-offset (.-left (.getBoundingClientRect (. js/document (getElementById "main-svg"))))
@@ -23,7 +24,8 @@
 (defn create-circle [radius center]
   (swap! app-state update-in [:circles] conj [:circle {:r radius
                                                        :cx (first center)
-                                                       :cy (rest center)}]))
+                                                       :cy (rest center)
+                                                       :fill (:color @app-state)}]))
 (defn square [x] (* x x))
 
 (defn magnitude
@@ -79,6 +81,10 @@
 (defn slider-handler []
   (swap! app-state assoc-in [:sym] (.-value (. js/document (getElementById "sym-slider")))))
 
+(defn swap-color [event]
+  (swap! app-state assoc-in [:color] (.-id (.-target event))))
+
+
 
 (defn symdraw []
   [:center
@@ -91,6 +97,83 @@
                  :min 3
                  :max 9
                  :on-change slider-handler}]]
+      [:svg {:id "colors"
+             :width 70
+             :height 500}
+            [:rect {:x 10
+                    :y 10
+                    :width 50
+                    :height 50
+                    :fill "black"
+                    :stroke (if (= (:color @app-state) "black") "black" "white")
+                    :stroke-width 5
+                    :fill-opacity 1
+                    :stroke-opacity 0.5
+                    :on-click swap-color
+                    :id "black"}]
+
+            [:rect {:x 10
+                    :y 70
+                    :width 50
+                    :height 50
+                    :fill "blue"
+                    :stroke (if (= (:color @app-state) "blue") "black" "white")
+                    :stroke-width 5
+                    :fill-opacity 1
+                    :stroke-opacity 0.5
+                    :on-click swap-color
+                    :id "blue"}]
+
+            [:rect {:x 10
+                    :y 130
+                    :width 50
+                    :height 50
+                    :fill "red"
+                    :stroke (if (= (:color @app-state) "red") "black" "white")
+                    :stroke-width 5
+                    :fill-opacity 1
+                    :stroke-opacity 0.5
+                    :on-click swap-color
+                    :id "red"}]
+
+            [:rect {:x 10
+                    :y 190
+                    :width 50
+                    :height 50
+                    :fill "green"
+                    :stroke (if (= (:color @app-state) "green") "black" "white")
+                    :stroke-width 5
+                    :fill-opacity 1
+                    :stroke-opacity 0.5
+                    :on-click swap-color
+                    :id "green"}]
+
+            [:rect {:x 10
+                    :y 250
+                    :width 50
+                    :height 50
+                    :fill "yellow"
+                    :stroke (if (= (:color @app-state) "yellow") "black" "white")
+                    :stroke-width 5
+                    :fill-opacity 1
+                    :stroke-opacity 0.5
+                    :on-click swap-color
+                    :id "yellow"}]
+
+            [:rect {:x 10
+                    :y 310
+                    :width 50
+                    :height 50
+                    :fill "white"
+                    :stroke (if (= (:color @app-state) "white") "black" "grey")
+                    :stroke-width 5
+                    :fill-opacity 1
+                    :stroke-opacity 0.5
+                    :on-click swap-color
+                    :id "white"}]]
+
+
+
       (into
         [:svg {:id "main-svg"
                :width 500
@@ -108,4 +191,4 @@
                           (. js/document (getElementById "app")))
 
 ;(defn on-js-reload []
-;   (swap! app-state assoc-in [:text] "Sandwich"))
+;   (swap! app-state assoc-in [:title] "Sandwich"))
